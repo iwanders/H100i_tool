@@ -1,0 +1,9 @@
+[package]
+name = "h100i_tool"
+version = "0.1.0"
+edition = "2021"
+authors = ["Ivor Wanders <ivor@iwanders.net>"]
+license = "BSD-3-Clause"
+
+[dependencies]
+hidapi = "2.6.3"
