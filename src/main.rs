@@ -1,3 +1,3 @@
-fn main() {
-    println!("Hello, world!");
+fn main() -> Result<(), h100i_tool::H100iError> {
+    h100i_tool::main()
 }
