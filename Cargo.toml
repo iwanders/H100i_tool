@@ -7,3 +7,4 @@ license = "BSD-3-Clause"
 
 [dependencies]
 hidapi = "2.6.3"
+thiserror = "1.0.64"
