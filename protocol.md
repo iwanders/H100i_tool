@@ -95,21 +95,39 @@ width=8  poly=0x07  init=0x00  refin=false  refout=false  xorout=0x00  check=0xf
 
 
 
-struct Msg {
-    u8 cmd;
-    u8 seq;
+#pragma pattern_limit 200000
+
+struct Values {
     u8 always_12;
     u8 always_08;
     u8 pad1[1];
     u16 msg_counter;
     u16 first_value;
-    u8 pad2[2];    
-
-    u8 buf[20];
+    u8 pad2[2];
+    u8 pad3;
+    
+    // these three bytes seem to alternate? what's the deal?
+    u8 pair_val1;
+    u8 pair_val2;
+    u8 pad4_duty_perhaps;
+    
+    u16 more_value;
+    
+    u8 buf[46];
     u8 crc;
 };
 
+struct Msg {
+    u8 cmd;
+    u8 seq;
+    if (cmd == 0xff) {
+      Values v;
+    } else {
+     u8 zzz[62];
+    }
+};
 
-Msg v[4900] @ 0;
+
+Msg v[1000] @ 0;
 
 ```
