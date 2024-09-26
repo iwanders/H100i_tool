@@ -95,7 +95,15 @@ width=8  poly=0x07  init=0x00  refin=false  refout=false  xorout=0x00  check=0xf
 
 
 
-#pragma pattern_limit 200000
+#pragma pattern_limit 20000000
+
+struct RepeatPattern{
+    u8 pad3_duty_perhaps;
+    
+    // these three bytes seem to alternate? what's the deal?
+    u8 pair_val1;
+    u8 pair_val2;
+};
 
 struct Values {
     u8 always_12;
@@ -103,17 +111,18 @@ struct Values {
     u8 pad1[1];
     u16 msg_counter;
     u16 first_value;
-    u8 pad2[2];
-    u8 pad3;
+    u16 pad2; // always zeros
+
+    RepeatPattern v1;
+    RepeatPattern v2;
+    RepeatPattern v3;
     
-    // these three bytes seem to alternate? what's the deal?
-    u8 pair_val1;
-    u8 pair_val2;
-    u8 pad4_duty_perhaps;
     
-    u16 more_value;
+    u8 buf[29];
+    u8 some_id[5]; //0x052d323741
+    u16 last_value;
     
-    u8 buf[46];
+    u8 bufz[7];
     u8 crc;
 };
 
@@ -128,6 +137,5 @@ struct Msg {
 };
 
 
-Msg v[1000] @ 0;
-
+Msg v[4500] @ 0;
 ```
