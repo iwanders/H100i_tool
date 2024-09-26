@@ -1,4 +1,131 @@
 use thiserror::Error;
+use zerocopy::{AsBytes, FromZeroes};
+use zerocopy_derive::{AsBytes, FromBytes, FromZeroes};
+
+#[derive(Error, Debug)]
+pub enum H100iError {
+    #[error("no matching usb device found")]
+    NoDevice,
+    #[error("hid error occured")]
+    HidError(#[from] hidapi::HidError),
+}
+
+#[derive(Debug)]
+pub struct H100i {
+    // api: hidapi::HidApi,
+    device: hidapi::HidDevice,
+    sequence: u8,
+}
+
+/*
+#[derive(FromZeroes, FromBytes)]
+#[repr(u8)]
+enum Command {
+    Status = 0xff,
+}
+const _: () = assert!( std::mem::size_of::<Command>() == 1, "command is knonw to be 1 byte");
+*/
+
+// Must be 64 bytes long, last byte is crc.
+#[derive(FromZeroes, FromBytes, AsBytes)]
+#[repr(C)]
+struct MsgWire {
+    /// Magic byte, always 0x3f.
+    magic: u8,
+    /// Sequence increments by 8s
+    sequence: u8,
+    /// Command byte
+    command: u8,
+    // big unknown here
+    padding: [u8; 60],
+    /// Crc value, calculated from all but the magic byte.
+    crc: u8,
+}
+const MSG_SIZE: usize = 64;
+const _: () = assert!(
+    std::mem::size_of::<MsgWire>() == MSG_SIZE,
+    "msg is known to be 64 bytes"
+);
+impl MsgWire {
+    pub fn new() -> Self {
+        let mut msg = MsgWire::new_zeroed();
+        msg.magic = 0x3f;
+        return msg;
+    }
+    pub fn update_crc(&mut self) {
+        let data = self.as_bytes();
+        let value = crc8(&data[1..MSG_SIZE - 1]);
+        self.crc = value;
+    }
+}
+
+impl H100i {
+    pub fn new() -> Result<H100i, H100iError> {
+        // Bus 001 Device 003: ID 1b1c:0c35 Corsair
+        let vendor_id = 0x1b1c;
+        let product_id = 0x0c35;
+
+        let api = hidapi::HidApi::new()?;
+        let mut found_device = None;
+        for device in api.device_list() {
+            if device.vendor_id() == vendor_id && device.product_id() == product_id {
+                found_device = Some(device.open_device(&api)?);
+            }
+        }
+        if let Some(device) = found_device {
+            device.set_blocking_mode(true)?;
+            Ok(H100i {
+                device,
+                sequence: 0x90,
+            })
+        } else {
+            Err(H100iError::NoDevice)
+        }
+    }
+
+    fn advance_sequence(&mut self) -> u8 {
+        let v = self.sequence.wrapping_add(8);
+        self.sequence = v;
+        v
+    }
+    /// Helper function to prepend a zero to a byte slice, send_feature_report requires this.
+    fn prepend_zero(v: &[u8]) -> Vec<u8> {
+        let mut new_v: Vec<u8> = Vec::new();
+        new_v.push(0);
+        for i in 0..v.len() {
+            new_v.push(v[i])
+        }
+        return new_v;
+    }
+
+    pub fn get_status(&mut self) -> Result<(), H100iError> {
+        // 3f:c0:ff:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:35
+        let mut msg = MsgWire::new();
+        let new_sequence = self.advance_sequence();
+        msg.sequence = new_sequence;
+        msg.command = 0xff;
+        msg.update_crc();
+
+        // self.device.send_feature_report(&Self::prepend_zero(msg.as_bytes()))?;
+        self.device.write(&Self::prepend_zero(msg.as_bytes()))?;
+
+        // And collect the answer.
+        let mut resp = [0u8; 64];
+        self.device.read(&mut resp)?;
+        println!("resp: {resp:x?}");
+        // self.device.read(&mut resp)?;
+        // println!("resp: {resp:x?}");
+
+        Ok(())
+    }
+}
+
+pub fn main() -> Result<(), H100iError> {
+    let mut d = H100i::new()?;
+    println!("d: {d:?}");
+    d.get_status()?;
+    Ok(())
+}
 
 fn crc8(data: &[u8]) -> u8 {
     // Table from:
@@ -37,47 +164,6 @@ fn crc8(data: &[u8]) -> u8 {
     // len--;
     // }
     crc.0
-}
-
-#[derive(Error, Debug)]
-pub enum H100iError {
-    #[error("no matching usb device found")]
-    NoDevice,
-    #[error("hid error occured")]
-    HidError(#[from] hidapi::HidError),
-}
-
-#[derive(Debug)]
-pub struct H100i {
-    // api: hidapi::HidApi,
-    device: hidapi::HidDevice,
-}
-
-impl H100i {
-    pub fn new() -> Result<H100i, H100iError> {
-        // Bus 001 Device 003: ID 1b1c:0c35 Corsair
-        let vendor_id = 0x1b1c;
-        let product_id = 0x0c35;
-
-        let api = hidapi::HidApi::new()?;
-        let mut found_device = None;
-        for device in api.device_list() {
-            if device.vendor_id() == vendor_id && device.product_id() == product_id {
-                found_device = Some(device.open_device(&api)?);
-            }
-        }
-        if let Some(device) = found_device {
-            Ok(H100i { device })
-        } else {
-            Err(H100iError::NoDevice)
-        }
-    }
-}
-
-pub fn main() -> Result<(), H100iError> {
-    let d = H100i::new()?;
-    println!("d: {d:?}");
-    Ok(())
 }
 
 #[cfg(test)]

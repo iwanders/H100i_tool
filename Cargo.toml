@@ -8,3 +8,6 @@ license = "BSD-3-Clause"
 [dependencies]
 hidapi = "2.6.3"
 thiserror = "1.0.64"
+zerocopy = "0.7.35"
+zerocopy-derive = "0.7.35"
+
