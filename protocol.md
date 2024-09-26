@@ -90,3 +90,26 @@ Same on incoming data;
 width=8  poly=0x07  init=0x00  refin=false  refout=false  xorout=0x00  check=0xf4  residue=0x00  name="CRC-8"
 ```
 
+```
+
+
+
+
+struct Msg {
+    u8 cmd;
+    u8 seq;
+    u8 always_12;
+    u8 always_08;
+    u8 pad1[1];
+    u16 msg_counter;
+    u16 first_value;
+    u8 pad2[2];    
+
+    u8 buf[20];
+    u8 crc;
+};
+
+
+Msg v[4900] @ 0;
+
+```
