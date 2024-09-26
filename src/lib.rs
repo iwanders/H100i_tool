@@ -98,7 +98,7 @@ impl H100i {
         return new_v;
     }
 
-    pub fn get_status(&mut self) -> Result<(), H100iError> {
+    pub fn get_status(&mut self) -> Result<[u8; 64], H100iError> {
         // 3f:c0:ff:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:35
         let mut msg = MsgWire::new();
         let new_sequence = self.advance_sequence();
@@ -112,18 +112,21 @@ impl H100i {
         // And collect the answer.
         let mut resp = [0u8; 64];
         self.device.read(&mut resp)?;
-        println!("resp: {resp:x?}");
+        println!("{resp:?}");
         // self.device.read(&mut resp)?;
         // println!("resp: {resp:x?}");
 
-        Ok(())
+        Ok(resp)
     }
 }
 
 pub fn main() -> Result<(), H100iError> {
     let mut d = H100i::new()?;
-    println!("d: {d:?}");
-    d.get_status()?;
+    // println!("d: {d:?}");
+    loop {
+        d.get_status()?;
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
     Ok(())
 }
 
