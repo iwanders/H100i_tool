@@ -1,4 +1,4 @@
-use zerocopy::{AsBytes, FromZeroes};
+use zerocopy::{AsBytes, FromBytes, FromZeroes};
 use zerocopy_derive::{AsBytes, FromBytes, FromZeroes};
 
 // Must be 64 bytes long, last byte is crc.
@@ -74,6 +74,87 @@ fn crc8(data: &[u8]) -> u8 {
     crc.0
 }
 
+#[derive(Copy, Clone, FromZeroes, FromBytes, AsBytes)]
+#[repr(C, packed(1))]
+pub struct FanStatus {
+    pub duty_1: u8,
+    pub _e8: u8,
+    pub _is03: u8,
+    pub duty_2: u8,
+
+    pub value: u16, // This is unaligned, bah.
+
+    pub _pad: u8,
+}
+const _: () = assert!(
+    std::mem::size_of::<FanStatus>() == 7,
+    "FanStatus is known to be 7 bytes"
+);
+
+impl std::fmt::Debug for FanStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value = self.value; // copy because it's unaligned :(
+        f.debug_struct("FanStatus")
+            .field("value", &value)
+            .field("duty_1", &self.duty_1)
+            .field("duty_2", &self.duty_2)
+            .finish()
+    }
+}
+
+// Must be 64 bytes long, last byte is crc.
+#[derive(Copy, Clone, FromZeroes, FromBytes, AsBytes)]
+#[repr(C, packed(1))]
+pub struct Status {
+    pub cmd: u8,
+    pub seq: u8,
+    pub _always_12: u8,
+    pub _always_08: u8,
+    pub _pad: u8,
+    pub msg_counter: u16,
+    pub value_start_t1: u16,
+    pub _pad2: u16, // always zeros
+
+    pub fans: [FanStatus; 4],
+
+    pub _something_le: u16,
+    pub _something_be: u16,
+
+    pub _pad3: u16,
+
+    pub uptime_ms: u32,
+
+    pub _some_id: [u8; 5], //0x052d323741
+
+    pub value_end_t1: u16,
+
+    pub _pad_5_zero: [u8; 7],
+    pub crc: u8,
+}
+impl std::fmt::Debug for Status {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // let value = self.value;  // copy because it's unaligned :(
+        let value_start_t1 = self.value_start_t1;
+        let value_end_t1 = self.value_end_t1;
+        let msg_counter = self.msg_counter;
+        let uptime_ms = self.uptime_ms;
+        f.debug_struct("Status")
+            .field("value_start_t1", &value_start_t1)
+            .field("value_end_t1", &value_end_t1)
+            .field("msg_counter", &msg_counter)
+            .field("uptime_ms", &uptime_ms)
+            .field("fans", &self.fans)
+            // .field("duty_1", &self.duty_1)
+            // .field("duty_2", &self.duty_2)
+            .finish()
+    }
+}
+
+const _: () = assert!(
+    std::mem::size_of::<Status>() == MSG_SIZE,
+    "msg is known to be 64 bytes"
+);
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -89,5 +170,18 @@ mod test {
             ]),
             0xd3
         );
+    }
+
+    #[test]
+    fn test_status() {
+        let on_wire = [
+            255, 224, 18, 8, 0, 223, 18, 199, 34, 0, 0, 132, 232, 3, 132, 216, 3, 0, 132, 232, 3,
+            132, 235, 3, 2, 255, 0, 0, 255, 128, 11, 0, 0, 0, 0, 0, 0, 0, 0, 35, 1, 1, 35, 0, 0,
+            45, 188, 186, 0, 5, 45, 50, 55, 65, 221, 34, 0, 0, 0, 0, 0, 0, 0, 218u8,
+        ];
+        assert_eq!(on_wire.len(), MSG_SIZE);
+        let status = Status::ref_from(&on_wire);
+        println!("status: {status:#?}");
+        println!("status size: {}", std::mem::size_of::<Status>());
     }
 }
