@@ -94,37 +94,43 @@ width=8  poly=0x07  init=0x00  refin=false  refout=false  xorout=0x00  check=0xf
 
 
 
-
 #pragma pattern_limit 20000000
 
+// whats t1 and t2, definitely correlate
+
 struct RepeatPattern{
-    u8 pad3_duty_perhaps;
+    u8 command_duty_perhaps;
+    u8 e8;
+    u8 is03;
+    u8 control_duty_perhaps;
+    u16 value;
+//    u8 pair_val2;
     
-    // these three bytes seem to alternate? what's the deal?
-    u8 pair_val1;
-    u8 pair_val2;
-};
+    u8 padthing;
+} [[static]];
 
 struct Values {
     u8 always_12;
     u8 always_08;
     u8 pad1[1];
     u16 msg_counter;
-    u16 first_value;
+    u16 first_value_t1;
     u16 pad2; // always zeros
 
     RepeatPattern v1;
     RepeatPattern v2;
     RepeatPattern v3;
+    RepeatPattern v4;
     
-    
-    u8 buf[29];
+    u16 something_le;
+    be u16 something_be;
+    u8 buf[6];
     u8 some_id[5]; //0x052d323741
-    u16 last_value;
+    u16 last_value_t2;
     
-    u8 bufz[7];
+    u8 buf_zero[7];
     u8 crc;
-};
+} [[static]];
 
 struct Msg {
     u8 cmd;
@@ -136,6 +142,10 @@ struct Msg {
     }
 };
 
-
 Msg v[4500] @ 0;
+
+
+
+
+
 ```
