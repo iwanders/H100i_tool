@@ -124,7 +124,8 @@ struct Values {
     
     u16 something_le;
     be u16 something_be;
-    u8 buf[6];
+    u8 buf[2];
+    u32 uptime_ms;
     u8 some_id[5]; //0x052d323741
     u16 last_value_t2;
     
@@ -143,6 +144,8 @@ struct Msg {
 };
 
 Msg v[4500] @ 0;
+
+
 
 
 
