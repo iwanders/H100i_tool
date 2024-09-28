@@ -78,8 +78,8 @@ fn crc8(data: &[u8]) -> u8 {
 #[repr(C, packed(1))]
 pub struct FanStatus {
     pub duty_1: u8,
-    pub _e8: u8,
-    pub _is03: u8,
+    pub _e8: u8,   // only e8 for fan
+    pub _is03: u8, // only 03 for fan
     pub duty_2: u8,
 
     pub value: u16, // This is unaligned, bah.
@@ -149,6 +149,11 @@ impl std::fmt::Debug for Status {
             .finish()
     }
 }
+impl Status {
+    pub fn is_valid(&self) -> bool {
+        self.cmd == 0xff && crc8(&self.as_bytes()[1..MSG_SIZE - 1]) == self.crc
+    }
+}
 
 const _: () = assert!(
     std::mem::size_of::<Status>() == MSG_SIZE,
@@ -181,6 +186,9 @@ mod test {
         ];
         assert_eq!(on_wire.len(), MSG_SIZE);
         let status = Status::ref_from(&on_wire);
+        assert!(status.is_some());
+        let status = status.unwrap();
+        assert!(status.is_valid());
         println!("status: {status:#?}");
         println!("status size: {}", std::mem::size_of::<Status>());
     }

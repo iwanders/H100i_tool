@@ -1,5 +1,5 @@
 use thiserror::Error;
-use zerocopy::{AsBytes, FromZeroes};
+use zerocopy::{AsBytes, FromBytes, FromZeroes};
 use zerocopy_derive::{AsBytes, FromBytes, FromZeroes};
 
 #[derive(Error, Debug)]
@@ -58,7 +58,7 @@ impl H100i {
         return new_v;
     }
 
-    pub fn get_status(&mut self) -> Result<[u8; 64], H100iError> {
+    pub fn get_status_bytes(&mut self) -> Result<[u8; 64], H100iError> {
         // 3f:c0:ff:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:35
         let mut msg = wire::Msg::new();
         let new_sequence = self.advance_sequence();
@@ -66,17 +66,18 @@ impl H100i {
         msg.command = 0xff;
         msg.update_crc();
 
-        // self.device.send_feature_report(&Self::prepend_zero(msg.as_bytes()))?;
         self.device.write(&Self::prepend_zero(msg.as_bytes()))?;
 
         // And collect the answer.
         let mut resp = [0u8; 64];
         self.device.read(&mut resp)?;
-        println!("{resp:?}");
-        // self.device.read(&mut resp)?;
-        // println!("resp: {resp:x?}");
 
         Ok(resp)
+    }
+
+    pub fn get_status(&mut self) -> Result<wire::Status, H100iError> {
+        let bytes = self.get_status_bytes()?;
+        Ok(*wire::Status::ref_from(&bytes).unwrap())
     }
 }
 
@@ -84,7 +85,8 @@ pub fn main() -> Result<(), H100iError> {
     let mut d = H100i::new()?;
     // println!("d: {d:?}");
     loop {
-        d.get_status()?;
+        let status = d.get_status()?;
+        println!("Status: {status:#?}");
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
     Ok(())
