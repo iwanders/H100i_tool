@@ -76,6 +76,23 @@ fn crc8(data: &[u8]) -> u8 {
 
 #[derive(Copy, Clone, FromZeroes, FromBytes, AsBytes)]
 #[repr(C, packed(1))]
+pub struct TempStatus {
+    pub frac: u8,
+    pub deg: u8,
+}
+impl std::fmt::Debug for TempStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value = self.deg as f32 + self.frac as f32 / 255.0;
+        f.debug_struct("TempStatus ")
+            .field("v_C", &value)
+            // .field("deg", &self.deg)
+            // .field("frac", &self.frac)
+            .finish()
+    }
+}
+
+#[derive(Copy, Clone, FromZeroes, FromBytes, AsBytes)]
+#[repr(C, packed(1))]
 pub struct FanStatus {
     // duty 1 and 2 are always identical?
     pub duty_1: u8,
@@ -120,7 +137,7 @@ pub struct Status {
     pub msg_counter: u16,
 
     // t1 changes more often on cooldown than t2, is inflow, one outflow?
-    pub value_start_t1: u16,
+    pub value_start_t1: TempStatus,
 
     pub _pad2: u16, // always zeros
 
@@ -137,7 +154,7 @@ pub struct Status {
 
     pub _some_id: [u8; 5], //0x052d323741
 
-    pub value_end_t1: u16,
+    pub value_end_t1: TempStatus,
 
     pub _pad_5_zero: [u8; 7],
 
