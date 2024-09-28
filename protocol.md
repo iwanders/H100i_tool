@@ -40,6 +40,57 @@ fan2 quiet
 3f081400ff05ffffffffff00000000000000000000000002ffff0000ff071e33204f2169238725ad29d42aff1e33204f2169238725ad29d42afffffffffffff7
 ```
 
+From `ServiceLogs\Corsair_Cooling`:
+```
+2024-09-28 20:32:54.7619 | 42 | INFO | H100i ELITE | ============================================================ 
+2024-09-28 20:32:54.7619 | 42 | INFO | H100i ELITE | Write performance settings (Fan #0, Mode = DefaultUsingInternalTemp) 
+2024-09-28 20:32:54.7619 | 42 | INFO | H100i ELITE | ============================================================ 
+2024-09-28 20:32:54.7619 | 42 | INFO | H100i ELITE | Temp:	30	32	33	35	37	41	42 
+2024-09-28 20:32:54.7619 | 42 | INFO | H100i ELITE | PWM:	20	31	41	53	68	83	100 
+2024-09-28 20:32:54.7619 | 42 | INFO | H100i ELITE | ============================================================ 
+2024-09-28 20:32:54.7619 | 42 | INFO | H100i ELITE | ============================================================ 
+2024-09-28 20:32:54.7619 | 42 | INFO | H100i ELITE | Write performance settings (Fan #1, Mode = DefaultUsingInternalTemp) 
+2024-09-28 20:32:54.7619 | 42 | INFO | H100i ELITE | ============================================================ 
+2024-09-28 20:32:54.7619 | 42 | INFO | H100i ELITE | Temp:	30	32	33	35	37	41	42 
+2024-09-28 20:32:54.7619 | 42 | INFO | H100i ELITE | PWM:	20	31	41	53	68	83	100 
+2024-09-28 20:32:54.7619 | 42 | INFO | H100i ELITE | ============================================================ 
+2024-09-28 20:32:54.7619 | 42 | INFO | H100i ELITE | New default curves were stored to device 
+2024-09-28 20:32:54.7619 | 42 | INFO | H100i ELITE | Pump mode 'Balanced' was stored to device 
+```
+
+pwm conversions:
+```
+z = lambda d: print(int((d/100)*255.0), hex(int((d/100)*255.0)))
+z(20) = 51 0x33
+z(31) = 79 0x4f
+z(41) = 104 0x68
+z(53) = 135 0x87
+z(68) = 173 0xad
+z(83) = 211 0xd3
+z(100) = 255 0xff
+
+                                                                                          __  __  ??  __  __  ??  __
+3fd81400ff05ffffffffff00000000000000000000000001ffff0000ff071e33204f2169238725ad29d42aff1e33204f2169238725ad29d42affffffffffff4d
+
+69 and d4 don't match...
+z = lambda d: print(math.ceil((d/100)*255.0), hex(math.ceil((d/100)*255.0)))
+z(41) = 105 0x69
+z(83) = 212 0xd4
+
+bingo.
+
+PWMs                                           P            |                           | __  __  __  __  __  __  __
+3fd81400ff05ffffffffff00000000000000000000000001ffff0000ff071e33204f2169238725ad29d42aff1e33204f2169238725ad29d42affffffffffff4d
+Temp                                                                                    30  32  33  35  37  41  42
+
+P is pump.
+Quiet is 0
+balanced is 1
+extreme is 2
+```
+
+
+
 Pump settings & fan settings start with `0x3fxx14`
 
 Requests come back from another endpoint?
@@ -77,6 +128,11 @@ Status maybe `0x3fxxff`
 second byte is sequence number, but it always increments by 8?
 
 Reply is in URB_INTERRUPT
+
+New capture, on icue start:
+```
+shark -r 2024_09_28*pcapng -Y "(usb.dst == \"1.6.0\") or (usb.src==\"1.6.0\") or (usb.dst==\"1.6.1\") or (usb.src==\"1.6.1\")" -T fields -e frame.time -e usb.src -e usb.dst -e usb.data_fragment -e usb.capdata
+```
 
 ## Checksum
 
@@ -149,3 +205,5 @@ struct Msg {
 
 Msg v[4500] @ 0;
 ```
+
+

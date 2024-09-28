@@ -121,6 +121,8 @@ impl std::fmt::Debug for FanStatus {
             .field("value", &value)
             .field("duty_1", &self.duty_1)
             .field("duty_2", &self.duty_2)
+            // .field("_is03", &self._is03)
+            // .field("_e8", &self._e8)
             .finish()
     }
 }
