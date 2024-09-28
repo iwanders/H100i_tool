@@ -1,11 +1,14 @@
 # Protocol notes
 
+First analyses, tshark:
 ```
 tshark -r 2024_09_21_2343_capture_fan_and_pump_profile.pcapng -Y "(usb.dst == \"1.3.0\") or (usb.src==\"1.3.0\")" -T fields -e frame.time -e usb.src -e usb.dst -e usb.data_fragment
 
 usb.dst == "1.3.0" or usb.src == "1.3.0"
 ```
 
+
+Captured on windows with deliberate actions:
 ```
 preamble; 1c00204adf0482daffff000000001b000001000300000248000000002109000200004000
                                                             | random data, forgot init?                                      | checksum?
@@ -53,7 +56,7 @@ Requests and responses in one:
 tshark -r 2024_09_21_2343_capture_fan_and_pump_profile.pcapng -Y "(usb.dst == \"1.3.0\") or (usb.src==\"1.3.0\") or (usb.dst == \"1.3.1\") or (usb.src == \"1.3.1\") " -T fields -e frame.time -e usb.src -e usb.dst -e usb.data_fragment
 ```
 
-Requesting data (fan speed, temperature):
+Requesting data (fan speed, temperature)?
 
 ```
 Sep 21, 2024 19:42:56.154897000 EDT	host	1.3.0	3f:c0:ff:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:35	
@@ -70,7 +73,6 @@ Sep 21, 2024 19:42:59.203696000 EDT	1.3.1	host		ff:98:12:08:00:a1:15:77:23:00:00
 ```
 
 Status maybe `0x3fxxff`
-
 
 second byte is sequence number, but it always increments by 8?
 
@@ -90,20 +92,22 @@ Same on incoming data;
 width=8  poly=0x07  init=0x00  refin=false  refout=false  xorout=0x00  check=0xf4  residue=0x00  name="CRC-8"
 ```
 
+## ImHex pattern struct
+
+For a consecutive file of status messages, each being 64 bytes long, concatenated together; `2024_09_26_100ms_status_reg_retrieval.txt`
+
+Switching to comments in the rust code.
 ```
-
-
-
 #pragma pattern_limit 20000000
 
 // whats t1 and t2, definitely correlate
 
 struct RepeatPattern{
     u8 command_duty_perhaps;
-    u8 e8;
-    u8 is03;
-    u8 control_duty_perhaps;
-    u16 value;
+    u8 e8; // only e8 for fan, 0 for pump?
+    u8 is03; // only 03 for fan, 0 for pump?
+    u8 control_duty_perhaps; // both dutys are identical?
+    u16 value; // does this need a divisor for fans?
 //    u8 pair_val2;
     
     u8 padthing;
@@ -122,10 +126,10 @@ struct Values {
     RepeatPattern v3;
     RepeatPattern v4;
     
-    u16 something_le;
+    u16 something_le;  // is this a temperature in Kelvin?
     be u16 something_be;
     u8 buf[2];
-    u32 uptime_ms;
+    u32 uptime_ms; // pretty sure about this, increments change exactly with used delay.
     u8 some_id[5]; //0x052d323741
     u16 last_value_t2;
     
@@ -144,11 +148,4 @@ struct Msg {
 };
 
 Msg v[4500] @ 0;
-
-
-
-
-
-
-
 ```

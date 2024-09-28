@@ -77,13 +77,19 @@ fn crc8(data: &[u8]) -> u8 {
 #[derive(Copy, Clone, FromZeroes, FromBytes, AsBytes)]
 #[repr(C, packed(1))]
 pub struct FanStatus {
+    // duty 1 and 2 are always identical?
     pub duty_1: u8,
-    pub _e8: u8,   // only e8 for fan
-    pub _is03: u8, // only 03 for fan
+    // only e8 for fan
+    pub _e8: u8,
+    // only 03 for fan
+    pub _is03: u8,
+
     pub duty_2: u8,
 
-    pub value: u16, // This is unaligned, bah.
+    // This is unaligned, bah, does it need a divisor for fans, seems high?
+    pub value: u16,
 
+    // Is 2 for the second fan?
     pub _pad: u8,
 }
 const _: () = assert!(
@@ -112,16 +118,21 @@ pub struct Status {
     pub _always_08: u8,
     pub _pad: u8,
     pub msg_counter: u16,
+
+    // t1 changes more often on cooldown than t2, is inflow, one outflow?
     pub value_start_t1: u16,
+
     pub _pad2: u16, // always zeros
 
     pub fans: [FanStatus; 4],
 
+    // Is this a temperature in Kelvin? Why in both endianness?
     pub _something_le: u16,
     pub _something_be: u16,
 
     pub _pad3: u16,
 
+    // pretty sure about this, increments change exactly with used delay.
     pub uptime_ms: u32,
 
     pub _some_id: [u8; 5], //0x052d323741
@@ -129,6 +140,7 @@ pub struct Status {
     pub value_end_t1: u16,
 
     pub _pad_5_zero: [u8; 7],
+
     pub crc: u8,
 }
 impl std::fmt::Debug for Status {
@@ -138,14 +150,14 @@ impl std::fmt::Debug for Status {
         let value_end_t1 = self.value_end_t1;
         let msg_counter = self.msg_counter;
         let uptime_ms = self.uptime_ms;
+        let _something_le = self._something_le;
         f.debug_struct("Status")
             .field("value_start_t1", &value_start_t1)
             .field("value_end_t1", &value_end_t1)
             .field("msg_counter", &msg_counter)
             .field("uptime_ms", &uptime_ms)
+            // .field("_something_le", &_something_le)
             .field("fans", &self.fans)
-            // .field("duty_1", &self.duty_1)
-            // .field("duty_2", &self.duty_2)
             .finish()
     }
 }
