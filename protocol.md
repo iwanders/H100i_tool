@@ -87,6 +87,11 @@ P is pump.
 Quiet is 0
 balanced is 1
 extreme is 2
+
+Another 14 thing is this: 
+3f681400ff05ffffffffffffffffffffffffffffffffff02ffffd422ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff36
+                                                    ^^ only variation
+
 ```
 
 
@@ -131,7 +136,7 @@ Reply is in URB_INTERRUPT
 
 New capture, on icue start:
 ```
-shark -r 2024_09_28*pcapng -Y "(usb.dst == \"1.6.0\") or (usb.src==\"1.6.0\") or (usb.dst==\"1.6.1\") or (usb.src==\"1.6.1\")" -T fields -e frame.time -e usb.src -e usb.dst -e usb.data_fragment -e usb.capdata
+tshark -r 2024_09_28*pcapng -Y "(usb.dst == \"1.6.0\") or (usb.src==\"1.6.0\") or (usb.dst==\"1.6.1\") or (usb.src==\"1.6.1\")" -T fields -e frame.time -e usb.src -e usb.dst -e usb.data_fragment -e usb.capdata
 ```
 
 ## Checksum
@@ -152,7 +157,7 @@ width=8  poly=0x07  init=0x00  refin=false  refout=false  xorout=0x00  check=0xf
 
 For a consecutive file of status messages, each being 64 bytes long, concatenated together; `2024_09_26_100ms_status_reg_retrieval.txt`
 
-Switching to comments in the rust code.
+Switching to comments in the rust code for status.
 ```
 #pragma pattern_limit 20000000
 

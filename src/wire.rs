@@ -150,7 +150,6 @@ pub struct Status {
     pub _something_be: u16,
 
     pub _pad3: u16,
-
     // pretty sure about this, increments change exactly with used delay.
     pub uptime_ms: u32,
 
@@ -185,9 +184,67 @@ impl Status {
         self.cmd == 0xff && crc8(&self.as_bytes()[1..MSG_SIZE - 1]) == self.crc
     }
 }
-
 const _: () = assert!(
     std::mem::size_of::<Status>() == MSG_SIZE,
+    "msg is known to be 64 bytes"
+);
+
+#[derive(Copy, Clone, FromZeroes, FromBytes, AsBytes)]
+#[repr(C, packed(1))]
+pub struct CurvePoint {
+    pub temperature: u8,
+    pub duty: u8,
+}
+#[derive(Copy, Clone, FromZeroes, FromBytes, AsBytes)]
+#[repr(C, packed(1))]
+pub struct CoolingCurve {
+    pub curve: [CurvePoint; 7],
+}
+// 1e33
+// 204f
+// 2169
+// 2387
+// 25ad
+// 29d4
+// 2aff
+
+/*
+    For cooling two types are seen:
+
+Type 1, speciying pump and curves
+   3fd81400ff05ffffffffff00000000000000000000000001ffff0000ff071e33204f2169238725ad29d42aff1e33204f2169238725ad29d42affffffffffff4d
+
+Type 2,
+   3f681400ff05ffffffffffffffffffffffffffffffffff02ffffd422ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff36
+                                                       ^^ only variation
+*/
+#[derive(Copy, Clone, FromZeroes, FromBytes, AsBytes)]
+#[repr(C, packed(1))]
+pub struct SetCooling {
+    pub cmd: u8,
+    pub seq: u8,
+    pub always_14: u8,
+    pub always_00_1: u8,
+    pub always_ff_1: u8,
+    pub always_05: u8,
+    pub always_ff_2: [u8; 5],
+    pub always_00_2: [u8; 12],
+    pub pump: u8,
+    pub always_ff_3: [u8; 2],
+
+    pub type_2_varies: u8, // type 1 is zero
+    pub type_2_22: u8,     // type 1 is zero
+
+    pub always_ff_4: u8,
+    pub type_1_07: u8, // type 2 is ff
+    pub curves: [CoolingCurve; 2],
+
+    pub always_ff_5: [u8; 5],
+
+    pub crc: u8,
+}
+const _: () = assert!(
+    std::mem::size_of::<SetCooling>() == MSG_SIZE,
     "msg is known to be 64 bytes"
 );
 
