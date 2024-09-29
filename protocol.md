@@ -211,4 +211,40 @@ struct Msg {
 Msg v[4500] @ 0;
 ```
 
+## 09-29 session
+
+Service startup & icue startup
+```
+tshark -r 2024_09_29_2234* -Y "(usb.dst == \"1.3.0\") or (usb.src==\"1.3.0\") or (usb.dst==\"1.3.1\") or (usb.src==\"1.3.1\")" -T fields  -e usb.src -e usb.dst -e usb.data_fragment -e usb.capdata
+```
+
+Not that much interesting unfortunately.
+
+Volatile pmp changes:
+```
+tshark -r 2024_09_29_2236_p* -Y "(usb.dst == \"1.3.0\") or (usb.src==\"1.3.0\") or (usb.dst==\"1.3.1\") or (usb.src==\"1.3.1\")" -T fields  -e usb.src -e usb.dst -e usb.data_fragment -e usb.capdata
+Quiet
+3f:98:14:00:ff:05:ff:ff:ff:ff:ff:00:00:00:00:00:00:00:00:00:00:00:00:00:ff:ff:00:00:ff:07:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:ff:ff:ff:ff:ff:6c
+balanced
+3f:d8:14:00:ff:05:ff:ff:ff:ff:ff:00:00:00:00:00:00:00:00:00:00:00:00:01:ff:ff:00:00:ff:07:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:ff:ff:ff:ff:ff:4d
+Extreme
+3f:10:14:00:ff:05:ff:ff:ff:ff:ff:00:00:00:00:00:00:00:00:00:00:00:00:02:ff:ff:00:00:ff:07:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:ff:ff:ff:ff:ff:c1
+Variable Speed
+3f:48:14:00:ff:05:ff:ff:ff:ff:ff:00:00:00:00:00:00:00:00:00:00:00:00:00:ff:ff:00:00:ff:07:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:ff:ff:ff:ff:ff:02
+```
+It appears variable speed is secretly just the Quiet pump profile, but then the service probably overrides the fan speed?
+
+
+Device cooling flash `device_cooling_flash_pump_balanced_fans_quiet`
+```
+3f:60:14:00:ff:05:ff:ff:ff:ff:ff:00:00:00:00:00:00:00:00:00:00:00:00:02:ff:ff:00:00:ff:07:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:ff:ff:ff:ff:ff:c0
+3f:d0:14:00:ff:05:ff:ff:ff:ff:ff:00:00:00:00:00:00:00:00:00:00:00:00:01:ff:ff:00:00:ff:07:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:ff:ff:ff:ff:ff:a2
+3f:e8:14:00:ff:05:ff:ff:ff:ff:ff:00:00:00:00:00:00:00:00:00:00:00:00:01:ff:ff:00:00:ff:07:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:ff:ff:ff:ff:ff:21
+```
+No difference from teh pump changes above!?
+
+Did the capture buffer flush?
+
+
+
 
