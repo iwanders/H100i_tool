@@ -189,13 +189,13 @@ const _: () = assert!(
     "msg is known to be 64 bytes"
 );
 
-#[derive(Copy, Clone, FromZeroes, FromBytes, AsBytes)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, FromZeroes, FromBytes, AsBytes)]
 #[repr(C, packed(1))]
 pub struct CurvePoint {
     pub temperature: u8,
     pub duty: u8,
 }
-#[derive(Copy, Clone, FromZeroes, FromBytes, AsBytes)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, FromZeroes, FromBytes, AsBytes)]
 #[repr(C, packed(1))]
 pub struct CoolingCurve {
     pub curve: [CurvePoint; 7],
@@ -247,6 +247,20 @@ const _: () = assert!(
     std::mem::size_of::<SetCooling>() == MSG_SIZE,
     "msg is known to be 64 bytes"
 );
+impl std::fmt::Debug for SetCooling {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SetCooling")
+            .field("pump", &self.pump)
+            .field("curves", &self.curves)
+            .finish()
+    }
+}
+
+impl SetCooling {
+    pub fn is_valid(&self) -> bool {
+        self.cmd == 0x3f && crc8(&self.as_bytes()[1..MSG_SIZE - 1]) == self.crc
+    }
+}
 
 #[cfg(test)]
 mod test {
@@ -279,5 +293,57 @@ mod test {
         assert!(status.is_valid());
         println!("status: {status:#?}");
         println!("status size: {}", std::mem::size_of::<Status>());
+    }
+    #[test]
+    fn test_set_cooling() {
+        let on_wire = [
+            63, 216, 20, 0, 255, 5, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+            255, 255, 0, 0, 255, 7, 30, 51, 32, 79, 33, 105, 35, 135, 37, 173, 41, 212, 42, 255,
+            30, 51, 32, 79, 33, 105, 35, 135, 37, 173, 41, 212, 42, 255, 255, 255, 255, 255, 255,
+            77u8,
+        ];
+        assert_eq!(on_wire.len(), MSG_SIZE);
+        let set_cooling = SetCooling::ref_from(&on_wire);
+        assert!(set_cooling.is_some());
+        let set_cooling = set_cooling.unwrap();
+        assert!(set_cooling.is_valid());
+        println!("set_cooling: {set_cooling:#?}");
+        for curve in set_cooling.curves.iter() {
+            assert_eq!(
+                curve,
+                &CoolingCurve {
+                    curve: [
+                        CurvePoint {
+                            temperature: 30,
+                            duty: 51
+                        },
+                        CurvePoint {
+                            temperature: 32,
+                            duty: 79
+                        },
+                        CurvePoint {
+                            temperature: 33,
+                            duty: 105
+                        },
+                        CurvePoint {
+                            temperature: 35,
+                            duty: 135
+                        },
+                        CurvePoint {
+                            temperature: 37,
+                            duty: 173
+                        },
+                        CurvePoint {
+                            temperature: 41,
+                            duty: 212
+                        },
+                        CurvePoint {
+                            temperature: 42,
+                            duty: 255
+                        },
+                    ]
+                }
+            );
+        }
     }
 }
