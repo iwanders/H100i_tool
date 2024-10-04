@@ -90,9 +90,33 @@ extreme is 2
 
 Another 14 thing is this: 
 3f681400ff05ffffffffffffffffffffffffffffffffff02ffffd422ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff36
-                                                    ^^ only variation
+                                                    ^^ ~only variation~
+                                                    ^^^^ only variation
+
+tshark -r 2024_09_28*pcapng -Y "(usb.dst == \"1.6.0\") or (usb.src==\"1.6.0\") or (usb.dst==\"1.6.1\") or (usb.src==\"1.6.1\")" -T fields -e usb.src -e usb.dst -e usb.data_fragment -e usb.capdata|  rg ':02:ff:ff:\d\d:\d\d:'
+
+3f781400ff05ffffffffffffffffffffffffffffffffff02ffff8622ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff17
+3f801400ff05ffffffffffffffffffffffffffffffffff02ffff8922ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe3
+3f981400ff05ffffffffffffffffffffffffffffffffff02ffff9122ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff79
+3fa01400ff05ffffffffffffffffffffffffffffffffff02ffff9422ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff47
+3fa81400ff05ffffffffffffffffffffffffffffffffff02ffff9822fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe
+3fa01400ff05ffffffffffffffffffffffffffffffffff02ffff0023ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb7
+3fa81400ff05ffffffffffffffffffffffffffffffffff02ffff0023ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff58
+3fb01400ff05ffffffffffffffffffffffffffffffffff02ffff0123ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe1
+3fb81400ff05ffffffffffffffffffffffffffffffffff02ffff0223ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff98
+3fc01400ff05ffffffffffffffffffffffffffffffffff02ffff0223ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff76
+3fc81400ff05ffffffffffffffffffffffffffffffffff02ffff0323ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff16
+3fd01400ff05ffffffffffffffffffffffffffffffffff02ffff0323ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff20
+3fd81400ff05ffffffffffffffffffffffffffffffffff02ffff0423ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6b
+3fe01400ff05ffffffffffffffffffffffffffffffffff02ffff0523ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff67
+3ff01400ff05ffffffffffffffffffffffffffffffffff02ffff0523ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffbe
+3ff81400ff05ffffffffffffffffffffffffffffffffff02ffff0623ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc7
+3f081400ff05ffffffffffffffffffffffffffffffffff02ffff0623ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1c
 
 ```
+Does look like a TempStatus being written? `2` combined with `0000` in this field sets the pump to extreme... perhaps it sets the pump to go from 75% to 100% at this temperature?
+
+
 
 
 
@@ -220,7 +244,7 @@ tshark -r 2024_09_29_2234* -Y "(usb.dst == \"1.3.0\") or (usb.src==\"1.3.0\") or
 
 Not that much interesting unfortunately.
 
-Volatile pmp changes:
+Volatile pump changes:
 ```
 tshark -r 2024_09_29_2236_p* -Y "(usb.dst == \"1.3.0\") or (usb.src==\"1.3.0\") or (usb.dst==\"1.3.1\") or (usb.src==\"1.3.1\")" -T fields  -e usb.src -e usb.dst -e usb.data_fragment -e usb.capdata
 Quiet
@@ -241,7 +265,7 @@ Device cooling flash `device_cooling_flash_pump_balanced_fans_quiet`
 3f:d0:14:00:ff:05:ff:ff:ff:ff:ff:00:00:00:00:00:00:00:00:00:00:00:00:01:ff:ff:00:00:ff:07:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:ff:ff:ff:ff:ff:a2
 3f:e8:14:00:ff:05:ff:ff:ff:ff:ff:00:00:00:00:00:00:00:00:00:00:00:00:01:ff:ff:00:00:ff:07:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:1e:33:20:4f:21:69:23:87:25:ad:29:d4:2a:ff:ff:ff:ff:ff:ff:21
 ```
-No difference from teh pump changes above!?
+No difference from the pump changes above!?
 
 Did the capture buffer flush?
 
