@@ -6,9 +6,17 @@ use zerocopy_derive::{AsBytes, FromBytes, FromZeroes};
 pub enum H100iError {
     #[error("no matching usb device found")]
     NoDevice,
-    #[error("hid error occured")]
+    #[error("hid error occurred")]
     HidError(#[from] hidapi::HidError),
+    #[error("parse error occurred")]
+    ParseError((String, [u8; 64])),
+    #[error("crc error occurred")]
+    CrcError([u8; 64]),
 }
+
+mod wire;
+
+pub enum Msg {}
 
 #[derive(Debug)]
 pub struct H100i {
@@ -16,8 +24,6 @@ pub struct H100i {
     device: hidapi::HidDevice,
     sequence: u8,
 }
-
-mod wire;
 
 impl H100i {
     pub fn new() -> Result<H100i, H100iError> {

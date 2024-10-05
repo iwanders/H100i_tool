@@ -1,3 +1,4 @@
+use crate::H100iError;
 use zerocopy::{AsBytes, FromBytes, FromZeroes};
 use zerocopy_derive::{AsBytes, FromBytes, FromZeroes};
 
@@ -36,6 +37,15 @@ impl Msg {
 
     pub fn is_valid(&self) -> bool {
         self.magic == 0x3f && crc8(&self.as_bytes()[1..MSG_SIZE - 1]) == self.crc
+    }
+
+    pub fn parse(&self) -> Result<crate::Msg, H100iError> {
+        if !self.is_valid() {
+            let mut res = [0u8; 64];
+            res.copy_from_slice(self.as_bytes());
+            return Err(H100iError::CrcError(res));
+        }
+        todo!("need to flesh out the nice messages")
     }
 }
 
@@ -215,7 +225,7 @@ Type 1, speciying pump and curves
 
 Type 2,
    3f681400ff05ffffffffffffffffffffffffffffffffff02ffffd422ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff36
-                                                       ^^ only variation
+                                                       ^^^^ Perhaps temperature setpoint? See protocol.md for speculation.
 */
 #[derive(Copy, Clone, FromZeroes, FromBytes, AsBytes)]
 #[repr(C, packed(1))]
