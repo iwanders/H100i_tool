@@ -12,6 +12,8 @@ pub enum H100iError {
     ParseError((String, [u8; 64])),
     #[error("crc error occurred")]
     CrcError([u8; 64]),
+    #[error("not enough bytes provided")]
+    ParseLengthError,
 }
 
 mod wire;
@@ -108,9 +110,18 @@ impl H100i {
         Ok(resp)
     }
 
-    pub fn get_status(&mut self) -> Result<wire::Status, H100iError> {
+    pub fn get_status(&mut self) -> Result<StatusMsg, H100iError> {
         let bytes = self.get_status_bytes()?;
-        Ok(*wire::Status::ref_from(&bytes).unwrap())
+        let msg = wire::Msg::from_slice(&bytes)?;
+        let parsed = msg.parse()?;
+        if let Msg::Status(status) = parsed {
+            return Ok(status);
+        } else {
+            return Err(H100iError::ParseError((
+                "wrong message".to_string(),
+                [0u8; 64],
+            )));
+        }
     }
 }
 

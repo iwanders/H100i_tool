@@ -3,7 +3,7 @@ use zerocopy::{AsBytes, FromBytes, FromZeroes};
 use zerocopy_derive::{AsBytes, FromBytes, FromZeroes};
 
 // Must be 64 bytes long, last byte is crc.
-#[derive(FromZeroes, FromBytes, AsBytes)]
+#[derive(FromZeroes, FromBytes, AsBytes, Copy, Clone)]
 #[repr(C)]
 pub struct Msg {
     /// Magic byte, always 0x3f.
@@ -29,6 +29,12 @@ impl Msg {
         msg.magic = 0x3f;
         return msg;
     }
+    pub fn from_slice(bytes: &[u8]) -> Result<Self, H100iError> {
+        Self::ref_from(bytes)
+            .copied()
+            .ok_or(H100iError::ParseLengthError)
+    }
+
     pub fn update_crc(&mut self) {
         let data = self.as_bytes();
         let value = crc8(&data[1..MSG_SIZE - 1]);
@@ -54,6 +60,12 @@ impl Msg {
         use crate::{DutyCycle, FanStatus, Msg, Rpm, StatusMsg, TemperatureC};
 
         if self.command == 0x12 {
+            if self.magic != 0xff {
+                return Err(H100iError::ParseError((
+                    "magic was not 0xff".to_owned(),
+                    self.as_array(),
+                )));
+            }
             let wire_status = Status::ref_from(&self.payload).ok_or(H100iError::ParseError((
                 "couldn't parse payload".to_owned(),
                 self.as_array(),
