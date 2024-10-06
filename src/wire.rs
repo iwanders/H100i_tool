@@ -36,7 +36,13 @@ impl Msg {
     }
 
     pub fn is_valid(&self) -> bool {
-        self.magic == 0x3f && crc8(&self.as_bytes()[1..MSG_SIZE - 1]) == self.crc
+        crc8(&self.as_bytes()[1..MSG_SIZE - 1]) == self.crc
+    }
+
+    fn as_array(&self) -> [u8; 64] {
+        let mut v = [0u8; 64];
+        v.copy_from_slice(self.as_bytes());
+        v
     }
 
     pub fn parse(&self) -> Result<crate::Msg, H100iError> {
@@ -44,6 +50,30 @@ impl Msg {
             let mut res = [0u8; 64];
             res.copy_from_slice(self.as_bytes());
             return Err(H100iError::CrcError(res));
+        }
+        use crate::{DutyCycle, FanStatus, Msg, Rpm, StatusMsg, TemperatureC};
+
+        if self.command == 0x12 {
+            let wire_status = Status::ref_from(&self.payload).ok_or(H100iError::ParseError((
+                "couldn't parse payload".to_owned(),
+                self.as_array(),
+            )))?;
+            let mut fans: [FanStatus; 4] = Default::default();
+            for (i, fan) in wire_status.fans.iter().enumerate() {
+                fans[i] = crate::FanStatus {
+                    duty_cycle: DutyCycle(fan.duty_1),
+                    speed: Rpm(fan.value),
+                };
+            }
+
+            return Ok(Msg::Status(StatusMsg {
+                msg_counter: wire_status.msg_counter,
+                uptime_ms: wire_status.uptime_ms,
+                temperature_1: TemperatureC(wire_status.value_start_t1.as_f32()),
+                temperature_2: TemperatureC(wire_status.value_end_t1.as_f32()),
+                // msg_counter: wire_status.msg_counter;
+                fans,
+            }));
         }
         todo!("need to flesh out the nice messages")
     }
@@ -96,12 +126,17 @@ pub struct TempStatus {
 }
 impl std::fmt::Debug for TempStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let value = self.deg as f32 + self.frac as f32 / 255.0;
+        let value = self.as_f32();
         f.debug_struct("TempStatus ")
             .field("v_C", &value)
             // .field("deg", &self.deg)
             // .field("frac", &self.frac)
             .finish()
+    }
+}
+impl TempStatus {
+    pub fn as_f32(&self) -> f32 {
+        self.deg as f32 + self.frac as f32 / 255.0
     }
 }
 
@@ -295,6 +330,15 @@ mod test {
         // assert!(status.is_valid());
         println!("status: {status:#?}");
         println!("status size: {}", std::mem::size_of::<Status>());
+
+        let wire_msg = Msg::ref_from(&on_wire).expect("should be parsable");
+        let parsed = wire_msg.parse();
+        println!("parsed: {parsed:?}");
+        if let Ok(crate::Msg::Status(status)) = parsed {
+            println!("status: {status:#?}");
+        } else {
+            assert!(false, "was not status message");
+        }
     }
     #[test]
     fn test_set_cooling() {

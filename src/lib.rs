@@ -16,7 +16,34 @@ pub enum H100iError {
 
 mod wire;
 
-pub enum Msg {}
+#[derive(Copy, Clone, Debug, Default)]
+pub struct DutyCycle(pub u8);
+
+#[derive(Copy, Clone, Debug, Default)]
+pub struct Rpm(pub u16);
+
+#[derive(Copy, Clone, Debug, Default)]
+pub struct TemperatureC(pub f32);
+
+#[derive(Copy, Clone, Debug, Default)]
+pub struct FanStatus {
+    pub speed: Rpm,
+    pub duty_cycle: DutyCycle,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct StatusMsg {
+    pub temperature_1: TemperatureC,
+    pub temperature_2: TemperatureC,
+    pub uptime_ms: u32,
+    pub msg_counter: u16,
+    pub fans: [FanStatus; 4],
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum Msg {
+    Status(StatusMsg),
+}
 
 #[derive(Debug)]
 pub struct H100i {
