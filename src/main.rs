@@ -12,7 +12,12 @@ struct Cli {
 enum Commands {
     /// Runs the development main function.
     Develop,
-    // Add { name: Option<String> },
+    /// Pretty print sensors
+    Sensors {
+        /// Interval by which to poll
+        #[arg(short, long, default_value_t = 0.1)]
+        interval: f64,
+    },
 }
 
 fn main() -> Result<(), h100i_tool::H100iError> {
@@ -22,5 +27,24 @@ fn main() -> Result<(), h100i_tool::H100iError> {
     // matches just as you would the top level cmd
     match &cli.command {
         Commands::Develop => h100i_tool::main(),
+        Commands::Sensors { interval } => {
+            let mut d = h100i_tool::H100i::new()?;
+            loop {
+                let status = d.get_status()?;
+                // println!("Status: {status:#?}");
+                println!();
+                println!("uptime_ms: {}", status.uptime_ms);
+                println!("msg_counter: {}", status.msg_counter);
+                println!("temp1_c: {}", status.temperature_1.0);
+                println!("temp2_c: {}", status.temperature_2.0);
+                println!("fan0_rpm: {}", status.fans[0].speed.0);
+                println!("fan0_duty: {}", status.fans[0].duty_cycle.0);
+                println!("fan1_rpm: {}", status.fans[1].speed.0);
+                println!("fan1_duty: {}", status.fans[1].duty_cycle.0);
+                println!("pump_rpm: {}", status.fans[2].speed.0);
+                println!("pump_duty: {}", status.fans[2].duty_cycle.0);
+                std::thread::sleep(std::time::Duration::from_secs_f64(*interval));
+            }
+        }
     }
 }
