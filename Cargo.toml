@@ -6,6 +6,7 @@ authors = ["Ivor Wanders <ivor@iwanders.net>"]
 license = "BSD-3-Clause"
 
 [dependencies]
+clap = { version = "4.5.20", features = ["derive"] }
 hidapi = "2.6.3"
 thiserror = "1.0.64"
 zerocopy = "0.7.35"
