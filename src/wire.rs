@@ -264,6 +264,43 @@ pub struct CoolingCurve {
 // 29d4
 // 2aff
 
+impl CoolingCurve {
+    pub fn balanced() -> Self {
+        CoolingCurve {
+            curve: [
+                CurvePoint {
+                    temperature: 30,
+                    duty: 51,
+                },
+                CurvePoint {
+                    temperature: 32,
+                    duty: 79,
+                },
+                CurvePoint {
+                    temperature: 33,
+                    duty: 105,
+                },
+                CurvePoint {
+                    temperature: 35,
+                    duty: 135,
+                },
+                CurvePoint {
+                    temperature: 37,
+                    duty: 173,
+                },
+                CurvePoint {
+                    temperature: 41,
+                    duty: 212,
+                },
+                CurvePoint {
+                    temperature: 42,
+                    duty: 255,
+                },
+            ],
+        }
+    }
+}
+
 /*
     For cooling two types are seen:
 
@@ -367,41 +404,7 @@ mod test {
         // assert!(set_cooling.is_valid());
         println!("set_cooling: {set_cooling:#?}");
         for curve in set_cooling.curves.iter() {
-            assert_eq!(
-                curve,
-                &CoolingCurve {
-                    curve: [
-                        CurvePoint {
-                            temperature: 30,
-                            duty: 51
-                        },
-                        CurvePoint {
-                            temperature: 32,
-                            duty: 79
-                        },
-                        CurvePoint {
-                            temperature: 33,
-                            duty: 105
-                        },
-                        CurvePoint {
-                            temperature: 35,
-                            duty: 135
-                        },
-                        CurvePoint {
-                            temperature: 37,
-                            duty: 173
-                        },
-                        CurvePoint {
-                            temperature: 41,
-                            duty: 212
-                        },
-                        CurvePoint {
-                            temperature: 42,
-                            duty: 255
-                        },
-                    ]
-                }
-            );
+            assert_eq!(curve, &CoolingCurve::balanced());
         }
     }
 }

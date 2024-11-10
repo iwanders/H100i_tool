@@ -1,6 +1,7 @@
+#![allow(irrefutable_let_patterns)]
 use thiserror::Error;
-use zerocopy::{AsBytes, FromBytes, FromZeroes};
-use zerocopy_derive::{AsBytes, FromBytes, FromZeroes};
+use zerocopy::AsBytes;
+// use zerocopy_derive::{AsBytes, FromBytes, FromZeroes};
 
 #[derive(Error, Debug)]
 pub enum H100iError {
@@ -16,7 +17,7 @@ pub enum H100iError {
     ParseLengthError,
 }
 
-mod wire;
+pub mod wire;
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct DutyCycle(pub u8);
@@ -133,5 +134,5 @@ pub fn main() -> Result<(), H100iError> {
         println!("Status: {status:#?}");
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
-    Ok(())
+    // Ok(())
 }
