@@ -299,6 +299,74 @@ impl CoolingCurve {
             ],
         }
     }
+    pub fn extreme() -> Self {
+        CoolingCurve {
+            curve: [
+                CurvePoint {
+                    temperature: 26,
+                    duty: 89,
+                },
+                CurvePoint {
+                    temperature: 27,
+                    duty: 110,
+                },
+                CurvePoint {
+                    temperature: 28,
+                    duty: 135,
+                },
+                CurvePoint {
+                    temperature: 29,
+                    duty: 163,
+                },
+                CurvePoint {
+                    temperature: 30,
+                    duty: 189,
+                },
+                CurvePoint {
+                    temperature: 31,
+                    duty: 219,
+                },
+                CurvePoint {
+                    temperature: 32,
+                    duty: 255,
+                },
+            ],
+        }
+    }
+    pub fn quiet() -> Self {
+        CoolingCurve {
+            curve: [
+                CurvePoint {
+                    temperature: 30,
+                    duty: 51,
+                },
+                CurvePoint {
+                    temperature: 32,
+                    duty: 79,
+                },
+                CurvePoint {
+                    temperature: 33,
+                    duty: 105,
+                },
+                CurvePoint {
+                    temperature: 35,
+                    duty: 135,
+                },
+                CurvePoint {
+                    temperature: 37,
+                    duty: 173,
+                },
+                CurvePoint {
+                    temperature: 41,
+                    duty: 212,
+                },
+                CurvePoint {
+                    temperature: 42,
+                    duty: 255,
+                },
+            ],
+        }
+    }
 }
 
 /*
