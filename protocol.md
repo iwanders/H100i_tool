@@ -83,6 +83,12 @@ PWMs                                           P            |                   
 3fd81400ff05ffffffffff00000000000000000000000001ffff0000ff071e33204f2169238725ad29d42aff1e33204f2169238725ad29d42affffffffffff4d
 Temp                                                                                    30  32  33  35  37  41  42
 
+Extreme:
+                                                              89  110 135 163 189 219 255
+                                                           |1a591b6e1c871da31ebd1fdb20ff
+                                                            26  27  28  29  30  31  32
+         
+
 P is pump.
 Quiet is 0
 balanced is 1
