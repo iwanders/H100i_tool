@@ -18,6 +18,9 @@ enum Commands {
         #[arg(short, long, default_value_t = 0.1)]
         interval: f64,
     },
+
+    /// Set the balanced profile.
+    Balanced,
 }
 
 fn main() -> Result<(), h100i_tool::H100iError> {
@@ -27,6 +30,12 @@ fn main() -> Result<(), h100i_tool::H100iError> {
     // matches just as you would the top level cmd
     match &cli.command {
         Commands::Develop => h100i_tool::main(),
+        Commands::Balanced => {
+            let mut d = h100i_tool::H100i::new()?;
+            let mut config = h100i_tool::Config::balanced();
+            d.set_config(&config)?;
+            return Ok(());
+        }
         Commands::Sensors { interval } => {
             let mut d = h100i_tool::H100i::new()?;
             loop {
