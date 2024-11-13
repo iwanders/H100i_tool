@@ -19,6 +19,8 @@ pub enum H100iError {
 
 pub mod wire;
 
+pub use wire::{CoolingCurve, PumpMode};
+
 #[derive(Copy, Clone, Debug, Default)]
 pub struct DutyCycle(pub u8);
 
@@ -46,6 +48,20 @@ pub struct StatusMsg {
 #[derive(Copy, Clone, Debug)]
 pub enum Msg {
     Status(StatusMsg),
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct Config {
+    pub fans: [CoolingCurve; 4],
+    pub pump: PumpMode,
+}
+impl Config {
+    pub fn balanced() -> Self {
+        Self {
+            fans: [CoolingCurve::balanced(); 4],
+            pump: PumpMode::Balanced,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -123,6 +139,11 @@ impl H100i {
                 [0u8; 64],
             )));
         }
+    }
+
+    pub fn set_config(&mut self, config: &Config) -> Result<(), H100iError> {
+        todo!();
+        Ok(())
     }
 }
 
