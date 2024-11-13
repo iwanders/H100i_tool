@@ -369,6 +369,15 @@ impl CoolingCurve {
     }
 }
 
+#[derive(Default, Debug, Copy, Clone)]
+#[repr(u8)]
+pub enum PumpMode {
+    Quiet,
+    #[default]
+    Balanced,
+    Extreme,
+}
+
 /*
     For cooling two types are seen:
 
