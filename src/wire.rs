@@ -425,6 +425,26 @@ impl std::fmt::Debug for SetCooling {
     }
 }
 
+impl SetCooling {
+    pub fn from_config(config: &crate::Config) -> Self {
+        SetCooling {
+            always_00_1: 0,
+            always_ff_1: 0xff,
+            always_05: 5,
+            always_ff_2: [0xff; 5],
+            always_00_2: [0x0; 12],
+            pump: config.pump as u8,
+            always_ff_3: [0xff; 2],
+            type_2_varies: 0,
+            type_2_22: 0,
+            always_ff_4: 0xff,
+            type_1_07: 7,
+            curves: config.fans,
+            always_ff_5: [0xff; 5],
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

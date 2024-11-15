@@ -52,13 +52,13 @@ pub enum Msg {
 
 #[derive(Copy, Clone, Debug)]
 pub struct Config {
-    pub fans: [CoolingCurve; 4],
+    pub fans: [CoolingCurve; 2],
     pub pump: PumpMode,
 }
 impl Config {
     pub fn balanced() -> Self {
         Self {
-            fans: [CoolingCurve::balanced(); 4],
+            fans: [CoolingCurve::balanced(); 2],
             pump: PumpMode::Balanced,
         }
     }
@@ -110,7 +110,7 @@ impl H100i {
         return new_v;
     }
 
-    pub fn get_status_bytes(&mut self) -> Result<[u8; 64], H100iError> {
+    fn get_status_bytes(&mut self) -> Result<[u8; 64], H100iError> {
         // 3f:c0:ff:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:35
         let mut msg = wire::Msg::new();
         let new_sequence = self.advance_sequence();
@@ -142,7 +142,21 @@ impl H100i {
     }
 
     pub fn set_config(&mut self, config: &Config) -> Result<(), H100iError> {
-        todo!();
+        let mut msg = wire::Msg::new();
+        let new_sequence = self.advance_sequence();
+        msg.sequence = new_sequence;
+        msg.command = 0x14;
+
+        let payload = wire::SetCooling::from_config(config);
+        msg.payload.copy_from_slice(payload.as_bytes());
+        msg.update_crc();
+
+        self.device.write(&Self::prepend_zero(msg.as_bytes()))?;
+
+        // And collect the answer.
+        let mut resp = [0u8; 64];
+        self.device.read(&mut resp)?;
+        println!("resp: {resp:?}");
         Ok(())
     }
 }

@@ -21,6 +21,7 @@ enum Commands {
 
     /// Set the balanced profile.
     Balanced,
+    // Extreme,
 }
 
 fn main() -> Result<(), h100i_tool::H100iError> {
@@ -33,6 +34,8 @@ fn main() -> Result<(), h100i_tool::H100iError> {
         Commands::Balanced => {
             let mut d = h100i_tool::H100i::new()?;
             let mut config = h100i_tool::Config::balanced();
+            // config.fans[0] = h100i_tool::CoolingCurve::extreme();
+            // config.fans[1] = h100i_tool::CoolingCurve::extreme();
             d.set_config(&config)?;
             return Ok(());
         }
