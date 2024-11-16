@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -10,6 +10,40 @@ struct Cli {
     /// Dry run? Don't actually communicate to the usb device.
     #[clap(long, short, action)]
     dry_run: bool,
+}
+
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+enum PumpArg {
+    Quiet,
+    #[default]
+    Balanced,
+    Extreme,
+}
+impl Into<h100i_tool::PumpMode> for PumpArg {
+    fn into(self) -> h100i_tool::PumpMode {
+        match self {
+            PumpArg::Quiet => h100i_tool::PumpMode::Quiet,
+            PumpArg::Balanced => h100i_tool::PumpMode::Balanced,
+            PumpArg::Extreme => h100i_tool::PumpMode::Extreme,
+        }
+    }
+}
+
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+enum FanArg {
+    Quiet,
+    #[default]
+    Balanced,
+    Extreme,
+}
+impl Into<h100i_tool::CoolingCurve> for FanArg {
+    fn into(self) -> h100i_tool::CoolingCurve {
+        match self {
+            FanArg::Quiet => h100i_tool::CoolingCurve::quiet(),
+            FanArg::Balanced => h100i_tool::CoolingCurve::balanced(),
+            FanArg::Extreme => h100i_tool::CoolingCurve::extreme(),
+        }
+    }
 }
 
 #[derive(Subcommand)]
@@ -29,6 +63,14 @@ enum Commands {
     Balanced,
     /// Set the extreme profile.
     Extreme,
+    /// Manually set the configuration
+    Config {
+        #[arg(short, long)]
+        pump_level: PumpArg,
+        // #[arg(short, long, default_value_t = FanArg::Balanced)]
+        #[arg(short, long)]
+        fans: FanArg,
+    },
 }
 
 fn main() -> Result<(), h100i_tool::H100iError> {
@@ -53,6 +95,15 @@ fn main() -> Result<(), h100i_tool::H100iError> {
         Commands::Quiet => {
             let mut d = h100i_tool::H100i::new(cli.dry_run)?;
             let config = h100i_tool::Config::quiet();
+            d.set_config(&config)?;
+            return Ok(());
+        }
+        Commands::Config { pump_level, fans } => {
+            let mut d = h100i_tool::H100i::new(cli.dry_run)?;
+            let mut config = h100i_tool::Config::balanced();
+            config.pump = (*pump_level).into();
+            config.fans[0] = (*fans).into();
+            config.fans[1] = (*fans).into();
             d.set_config(&config)?;
             return Ok(());
         }
