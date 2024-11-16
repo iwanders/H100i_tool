@@ -69,10 +69,11 @@ pub struct H100i {
     // api: hidapi::HidApi,
     device: hidapi::HidDevice,
     sequence: u8,
+    dry_run: bool,
 }
 
 impl H100i {
-    pub fn new() -> Result<H100i, H100iError> {
+    pub fn new(dry_run: bool) -> Result<H100i, H100iError> {
         // Bus 001 Device 003: ID 1b1c:0c35 Corsair
         let vendor_id = 0x1b1c;
         let product_id = 0x0c35;
@@ -89,9 +90,22 @@ impl H100i {
             Ok(H100i {
                 device,
                 sequence: 0x90,
+                dry_run,
             })
         } else {
             Err(H100iError::NoDevice)
+        }
+    }
+
+    fn write_read(&mut self, data: &[u8]) -> Result<[u8; 64], H100iError> {
+        if self.dry_run {
+            println!("Dry run: {data:?}");
+            Ok([0; 64])
+        } else {
+            self.device.write(data)?;
+            let mut resp = [0u8; 64];
+            self.device.read(&mut resp)?;
+            Ok(resp)
         }
     }
 
@@ -118,13 +132,13 @@ impl H100i {
         msg.command = 0xff;
         msg.update_crc();
 
-        self.device.write(&Self::prepend_zero(msg.as_bytes()))?;
+        self.write_read(&Self::prepend_zero(msg.as_bytes()))
 
         // And collect the answer.
-        let mut resp = [0u8; 64];
-        self.device.read(&mut resp)?;
+        // let mut resp = [0u8; 64];
+        // self.device.read(&mut resp)?;
 
-        Ok(resp)
+        // Ok(resp)
     }
 
     pub fn get_status(&mut self) -> Result<StatusMsg, H100iError> {
@@ -151,18 +165,18 @@ impl H100i {
         msg.payload.copy_from_slice(payload.as_bytes());
         msg.update_crc();
 
-        self.device.write(&Self::prepend_zero(msg.as_bytes()))?;
+        let return_value = self.write_read(&Self::prepend_zero(msg.as_bytes()))?;
 
         // And collect the answer.
-        let mut resp = [0u8; 64];
-        self.device.read(&mut resp)?;
-        println!("resp: {resp:?}");
+        // let mut resp = [0u8; 64];
+        // self.device.read(&mut resp)?;
+        // println!("resp: {resp:?}");
         Ok(())
     }
 }
 
 pub fn main() -> Result<(), H100iError> {
-    let mut d = H100i::new()?;
+    let mut d = H100i::new(false)?;
     // println!("d: {d:?}");
     loop {
         let status = d.get_status()?;

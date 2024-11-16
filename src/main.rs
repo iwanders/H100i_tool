@@ -6,6 +6,10 @@ use clap::{Parser, Subcommand};
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+
+    /// Dry run? Don't actually communicate to the usb device.
+    #[clap(long, short, action)]
+    dry_run: bool,
 }
 
 #[derive(Subcommand)]
@@ -32,7 +36,7 @@ fn main() -> Result<(), h100i_tool::H100iError> {
     match &cli.command {
         Commands::Develop => h100i_tool::main(),
         Commands::Balanced => {
-            let mut d = h100i_tool::H100i::new()?;
+            let mut d = h100i_tool::H100i::new(cli.dry_run)?;
             let mut config = h100i_tool::Config::balanced();
             // config.fans[0] = h100i_tool::CoolingCurve::extreme();
             // config.fans[1] = h100i_tool::CoolingCurve::extreme();
@@ -40,7 +44,7 @@ fn main() -> Result<(), h100i_tool::H100iError> {
             return Ok(());
         }
         Commands::Sensors { interval } => {
-            let mut d = h100i_tool::H100i::new()?;
+            let mut d = h100i_tool::H100i::new(cli.dry_run)?;
             loop {
                 let status = d.get_status()?;
                 // println!("Status: {status:#?}");
