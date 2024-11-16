@@ -62,6 +62,18 @@ impl Config {
             pump: PumpMode::Balanced,
         }
     }
+    pub fn extreme() -> Self {
+        Self {
+            fans: [CoolingCurve::extreme(); 2],
+            pump: PumpMode::Extreme,
+        }
+    }
+    pub fn quiet() -> Self {
+        Self {
+            fans: [CoolingCurve::quiet(); 2],
+            pump: PumpMode::Quiet,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -165,12 +177,9 @@ impl H100i {
         msg.payload.copy_from_slice(payload.as_bytes());
         msg.update_crc();
 
-        let return_value = self.write_read(&Self::prepend_zero(msg.as_bytes()))?;
+        let payload = Self::prepend_zero(msg.as_bytes());
+        let _return_value = self.write_read(&payload)?;
 
-        // And collect the answer.
-        // let mut resp = [0u8; 64];
-        // self.device.read(&mut resp)?;
-        // println!("resp: {resp:?}");
         Ok(())
     }
 }

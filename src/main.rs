@@ -23,9 +23,12 @@ enum Commands {
         interval: f64,
     },
 
+    /// Set the quiet profile.
+    Quiet,
     /// Set the balanced profile.
     Balanced,
-    // Extreme,
+    /// Set the extreme profile.
+    Extreme,
 }
 
 fn main() -> Result<(), h100i_tool::H100iError> {
@@ -37,9 +40,19 @@ fn main() -> Result<(), h100i_tool::H100iError> {
         Commands::Develop => h100i_tool::main(),
         Commands::Balanced => {
             let mut d = h100i_tool::H100i::new(cli.dry_run)?;
-            let mut config = h100i_tool::Config::balanced();
-            // config.fans[0] = h100i_tool::CoolingCurve::extreme();
-            // config.fans[1] = h100i_tool::CoolingCurve::extreme();
+            let config = h100i_tool::Config::balanced();
+            d.set_config(&config)?;
+            return Ok(());
+        }
+        Commands::Extreme => {
+            let mut d = h100i_tool::H100i::new(cli.dry_run)?;
+            let config = h100i_tool::Config::extreme();
+            d.set_config(&config)?;
+            return Ok(());
+        }
+        Commands::Quiet => {
+            let mut d = h100i_tool::H100i::new(cli.dry_run)?;
+            let config = h100i_tool::Config::quiet();
             d.set_config(&config)?;
             return Ok(());
         }
